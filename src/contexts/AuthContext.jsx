@@ -25,26 +25,18 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (email, password, selectedRole) => {
+  const login = (email, password) => {
     const user = sampleUsers.find(
       (user) => user.email === email && user.password === password
     );
 
     if (user) {
-      // Verify the selected role matches the actual user role
-      if (user.role !== selectedRole) {
-        toast.error(`Invalid role selected for ${email}`);
-        return false;
-      }
-
       // Remove password before storing user
       const { password, ...userWithoutPassword } = user;
       setCurrentUser(userWithoutPassword);
       localStorage.setItem('apiHubUser', JSON.stringify(userWithoutPassword));
       toast.success(`Welcome back, ${user.name}!`);
-      
-      // Redirect based on role
-      navigate(user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+      navigate('/dashboard');
       return true;
     }
     

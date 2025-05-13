@@ -11,10 +11,6 @@ const Dashboard = () => {
     return <Navigate to="/login" />;
   }
 
-  if (currentUser.role !== 'admin') {
-    return <Navigate to="/user/dashboard" />;
-  }
-
   const stats = [
     {
       title: 'Total API Calls',
@@ -24,7 +20,7 @@ const Dashboard = () => {
     },
     {
       title: 'Active APIs',
-      value: '24',
+      value: currentUser.role === 'admin' ? '24' : '3',
       change: '+2',
       positive: true
     },
@@ -47,7 +43,7 @@ const Dashboard = () => {
       <div>
         <h1 className="text-2xl font-bold">Welcome, {currentUser.name}</h1>
         <p className="text-muted-foreground">
-          Admin Dashboard - API Platform Overview
+          Here's an overview of your API performance
         </p>
       </div>
       
@@ -100,54 +96,6 @@ const Dashboard = () => {
                 </div>
               </div>
             ))}
-          </div>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">User Registrations</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-2xl font-bold">457</p>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">+24</p>
-                <p className="text-sm text-muted-foreground">This Month</p>
-              </div>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: "75%" }}></div>
-            </div>
-            <p className="text-sm text-muted-foreground">75% towards monthly goal</p>
-          </div>
-        </Card>
-        
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">Revenue</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-2xl font-bold">$12,845</p>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">+8.2%</p>
-                <p className="text-sm text-muted-foreground">From Last Month</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">API Subscriptions</span>
-                <span className="text-sm">$9,240</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Per-call Charges</span>
-                <span className="text-sm">$3,605</span>
-              </div>
-            </div>
           </div>
         </Card>
       </div>

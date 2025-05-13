@@ -16,91 +16,61 @@ import {
   Activity,
 } from 'lucide-react';
 
-const Sidebar = ({ isAdmin }) => {
-  const { currentUser, logout } = useAuth();
+const Sidebar = () => {
+  const { currentUser, logout, isAdmin } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
-  // Base path based on role
-  const basePath = isAdmin ? '/admin/dashboard' : '/user/dashboard';
-
-  const adminMenuItems = [
+  const menuItems = [
     {
       title: 'APIs',
       icon: <Package size={20} />,
-      path: `${basePath}/apis`,
+      path: '/dashboard/apis',
+      admin: false
     },
     {
       title: 'API Logs',
       icon: <FileText size={20} />,
-      path: `${basePath}/logs`,
+      path: '/dashboard/logs',
+      admin: false
     },
     {
       title: 'API Keys',
       icon: <Key size={20} />,
-      path: `${basePath}/keys`,
+      path: '/dashboard/keys',
+      admin: false
     },
     {
       title: 'Usage Stats',
       icon: <BarChart2 size={20} />,
-      path: `${basePath}/stats`,
+      path: '/dashboard/stats',
+      admin: false
     },
     {
       title: 'Subscription',
       icon: <Activity size={20} />,
-      path: `${basePath}/subscription`,
+      path: '/dashboard/subscription',
+      admin: false
     },
     {
       title: 'Plans',
       icon: <Package size={20} />,
-      path: `${basePath}/plans`,
+      path: '/dashboard/plans',
+      admin: isAdmin
     },
     {
       title: 'Billing',
       icon: <CreditCard size={20} />,
-      path: `${basePath}/billing`,
+      path: '/dashboard/billing',
+      admin: false
     },
     {
       title: 'Settings',
       icon: <Settings size={20} />,
-      path: `${basePath}/settings`,
+      path: '/dashboard/settings',
+      admin: false
     },
   ];
-
-  const userMenuItems = [
-    {
-      title: 'Available APIs',
-      icon: <Package size={20} />,
-      path: `${basePath}/apis`,
-    },
-    {
-      title: 'API Keys',
-      icon: <Key size={20} />,
-      path: `${basePath}/keys`,
-    },
-    {
-      title: 'Usage Stats',
-      icon: <BarChart2 size={20} />,
-      path: `${basePath}/stats`,
-    },
-    {
-      title: 'Subscription',
-      icon: <Activity size={20} />,
-      path: `${basePath}/subscription`,
-    },
-    {
-      title: 'Billing',
-      icon: <CreditCard size={20} />,
-      path: `${basePath}/billing`,
-    },
-    {
-      title: 'Settings',
-      icon: <Settings size={20} />,
-      path: `${basePath}/settings`,
-    },
-  ];
-
-  const menuItems = isAdmin ? adminMenuItems : userMenuItems;
 
   return (
     <div 
@@ -149,21 +119,23 @@ const Sidebar = ({ isAdmin }) => {
         </div>
 
         <nav>
-          {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "flex items-center px-4 py-3 mb-1 mx-2 rounded-md transition-colors",
-                location.pathname === item.path
-                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "hover:bg-sidebar-accent text-sidebar-foreground"
-              )}
-            >
-              <span className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")}>{item.icon}</span>
-              {!collapsed && <span className="font-medium">{item.title}</span>}
-            </Link>
-          ))}
+          {menuItems
+            .filter(item => !item.admin || isAdmin)
+            .map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={cn(
+                  "flex items-center px-4 py-3 mb-1 mx-2 rounded-md transition-colors",
+                  location.pathname === item.path
+                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                    : "hover:bg-sidebar-accent text-sidebar-foreground"
+                )}
+              >
+                <span className={cn("flex-shrink-0", collapsed ? "mx-auto" : "mr-3")}>{item.icon}</span>
+                {!collapsed && <span className="font-medium">{item.title}</span>}
+              </Link>
+            ))}
         </nav>
       </div>
 

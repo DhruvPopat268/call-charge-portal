@@ -6,7 +6,6 @@ import { Navigate } from 'react-router-dom';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('user');
   const [isLoading, setIsLoading] = useState(false);
   const { login, currentUser } = useAuth();
 
@@ -15,16 +14,14 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password, role);
+      await login(email, password);
     } finally {
       setIsLoading(false);
     }
   };
 
   if (currentUser) {
-    return currentUser.role === 'admin' ? 
-      <Navigate to="/admin/dashboard" /> : 
-      <Navigate to="/user/dashboard" />;
+    return <Navigate to="/dashboard" />;
   }
 
   return (
@@ -76,22 +73,6 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-            </div>
-
-            <div>
-              <label htmlFor="role" className="block text-sm font-medium text-gray-700">
-                Role
-              </label>
-              <select
-                id="role"
-                name="role"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-              </select>
             </div>
           </div>
 
