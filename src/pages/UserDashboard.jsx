@@ -4,40 +4,36 @@ import { useAuth } from '../contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Navigate } from 'react-router-dom';
 
-const Dashboard = () => {
+const UserDashboard = () => {
   const { currentUser } = useAuth();
   
   if (!currentUser) {
     return <Navigate to="/login" />;
   }
 
-  if (currentUser.role !== 'admin') {
-    return <Navigate to="/user/dashboard" />;
-  }
-
   const stats = [
     {
       title: 'Total API Calls',
-      value: '25,342',
-      change: '+12.5%',
+      value: '5,245',
+      change: '+8.2%',
       positive: true
     },
     {
       title: 'Active APIs',
-      value: '24',
-      change: '+2',
+      value: '3',
+      change: '+1',
       positive: true
     },
     {
       title: 'API Response Time',
-      value: '245ms',
-      change: '-12ms',
+      value: '218ms',
+      change: '-8ms',
       positive: true
     },
     {
       title: 'Success Rate',
-      value: '99.8%',
-      change: '+0.2%',
+      value: '99.9%',
+      change: '+0.1%',
       positive: true
     }
   ];
@@ -47,7 +43,7 @@ const Dashboard = () => {
       <div>
         <h1 className="text-2xl font-bold">Welcome, {currentUser.name}</h1>
         <p className="text-muted-foreground">
-          Admin Dashboard - API Platform Overview
+          Here's an overview of your API usage
         </p>
       </div>
       
@@ -84,13 +80,13 @@ const Dashboard = () => {
         </Card>
 
         <Card className="p-6">
-          <h3 className="font-semibold mb-4">API Usage By Endpoint</h3>
+          <h3 className="font-semibold mb-4">Purchased APIs</h3>
           <div className="space-y-4">
-            {['GET /weather', 'POST /users', 'GET /products', 'GET /analytics'].map((endpoint, i) => (
+            {['Weather API', 'Currency API', 'Stock API'].map((api, i) => (
               <div key={i} className="space-y-2">
                 <div className="flex justify-between">
-                  <span className="text-sm font-medium">{endpoint}</span>
-                  <span className="text-sm text-muted-foreground">{90 - (i * 20)}%</span>
+                  <span className="text-sm font-medium">{api}</span>
+                  <span className="text-sm text-muted-foreground">{90 - (i * 20)}% utilized</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div 
@@ -101,58 +97,44 @@ const Dashboard = () => {
               </div>
             ))}
           </div>
-        </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">User Registrations</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-2xl font-bold">457</p>
-                <p className="text-sm text-muted-foreground">Total Users</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">+24</p>
-                <p className="text-sm text-muted-foreground">This Month</p>
-              </div>
-            </div>
-            <div className="h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-primary rounded-full" style={{ width: "75%" }}></div>
-            </div>
-            <p className="text-sm text-muted-foreground">75% towards monthly goal</p>
-          </div>
-        </Card>
-        
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">Revenue</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between">
-              <div>
-                <p className="text-2xl font-bold">$12,845</p>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-green-600">+8.2%</p>
-                <p className="text-sm text-muted-foreground">From Last Month</p>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm">API Subscriptions</span>
-                <span className="text-sm">$9,240</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm">Per-call Charges</span>
-                <span className="text-sm">$3,605</span>
-              </div>
-            </div>
+          <div className="mt-4 pt-4 border-t border-border">
+            <button className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90">
+              Browse More APIs
+            </button>
           </div>
         </Card>
       </div>
+
+      <Card className="p-6">
+        <h3 className="font-semibold mb-4">Payment Methods</h3>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-border rounded-md">
+            <div className="flex items-center">
+              <div className="h-10 w-10 bg-gray-100 flex items-center justify-center rounded-md mr-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+              </div>
+              <div>
+                <p className="font-medium">Visa ending in 4242</p>
+                <p className="text-sm text-muted-foreground">Expires 12/2025</p>
+              </div>
+            </div>
+            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Default</span>
+          </div>
+          
+          <button className="inline-flex items-center text-primary hover:underline">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Payment Method
+          </button>
+        </div>
+      </Card>
     </div>
   );
 };
 
-export default Dashboard;
+export default UserDashboard;
