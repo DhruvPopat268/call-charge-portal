@@ -84,7 +84,7 @@ const Sidebar = () => {
 
   const handleLogout = async () => {
   try {
-    await axios.post('http://localhost:7000/auth/admin/logout', {}, { withCredentials: true });
+    await axios.post(`${import.meta.env.VITE_BASE_URL}/auth/admin/logout`, {}, { withCredentials: true });
 
     // Clear localStorage
     localStorage.removeItem('role');

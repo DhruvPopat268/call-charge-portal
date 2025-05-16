@@ -69,7 +69,7 @@ const ApiList = () => {
   const onSubmit = async (data) => {
     try {
       if (editApi) {
-        const res = await axios.put(`http://localhost:7000/api/${editApi._id}`, data, {
+        const res = await axios.put(`${import.meta.env.VITE_BASE_URL}/api/${editApi._id}`, data, {
           withCredentials: true,
         });
 
@@ -82,7 +82,7 @@ const ApiList = () => {
         }
 
       } else {
-        const res_post = await axios.post("http://localhost:7000/api/add", data, {
+        const res_post = await axios.post(`${import.meta.env.VITE_BASE_URL}/api/add`, data, {
           withCredentials: true
         });
 
@@ -116,7 +116,7 @@ const ApiList = () => {
     }
 
     try {
-      const res = await axios.delete(`http://localhost:7000/api/${apiId}`, {
+      const res = await axios.delete(`${import.meta.env.VITE_BASE_URL}/api/${apiId}`, {
         withCredentials: true,
       });
 

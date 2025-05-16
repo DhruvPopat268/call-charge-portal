@@ -24,7 +24,7 @@ const AuthForm = ({ mode, role }) => {
   const onSubmit = async (data) => {
     try {
       localStorage.setItem("name",data.email)
-      const endpoint = `http://localhost:7000/auth/${role}/${isLogin ? "login" : "signup"}`;
+      const endpoint = `${import.meta.env.VITE_BASE_URL}/auth/${role}/${isLogin ? "login" : "signup"}`;
       const res = await axios.post(endpoint, data, {
         withCredentials: true,
       });

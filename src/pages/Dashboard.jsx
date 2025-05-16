@@ -16,7 +16,7 @@ const Dashboard = () => {
   useEffect(() => {
     const usageByEndpoint = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/logs/usage-by-endpoint');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs/usage-by-endpoint`);
         setEndpointUsage(res.data);
       } catch (err) {
         console.error('Failed to load endpoint usage:', err);
@@ -26,7 +26,7 @@ const Dashboard = () => {
 
     const fetchLogs = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/recent');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/recent`);
         setLogs(res.data);
       } catch (err) {
         console.error("Failed to fetch logs:", err);
@@ -36,7 +36,7 @@ const Dashboard = () => {
 
     const fetchStats = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/stats');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/stats`);
         const data = res.data;
 
         setStats([

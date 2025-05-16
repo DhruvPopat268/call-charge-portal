@@ -9,7 +9,7 @@ const ApiLogs = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/logs');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs`);
         console.log(res.data)
         setLogs(res.data); // <- Use .data to access actual logs
       } catch (error) {
