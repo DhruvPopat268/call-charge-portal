@@ -21,14 +21,14 @@ const UsageStats = () => {
   };
 
   useEffect(() => {
-    axios.get('http://localhost:7000/proxy/logs/stats')
+    axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs/stats`)
       .then(res => {setStats(res.data)
       })
       .catch(err => console.error(err));
 
     const fetchDailyUsage = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/logs/daily-usage');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs/daily-usage`);
         setDailyUsage(res.data);
       } catch (err) {
         console.error('Error fetching daily usage:', err.message);
@@ -38,7 +38,7 @@ const UsageStats = () => {
 
     const usageByAPI = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/logs/usage-by-api');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs/usage-by-api`);
         console.log(res.data)
         setApiUsage(res.data);
       } catch (err) {
@@ -49,7 +49,7 @@ const UsageStats = () => {
 
     const usageByEndpoint = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/proxy/logs/usage-by-endpoint');
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs/usage-by-endpoint`);
         setEndpointUsage(res.data);
       } catch (err) {
         console.error('Failed to load endpoint usage:', err);
