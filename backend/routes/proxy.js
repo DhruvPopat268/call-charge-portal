@@ -333,11 +333,11 @@ router.all('/:apiId', async (req, res) => {
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
       const duration = Date.now() - start;
+
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        apiId: null,
-        rawApiId: apiId,
+        rawApiId: apiId, // log the invalid ID
         status: 400,
         responseTime: duration,
         method: req.method,
@@ -351,10 +351,10 @@ router.all('/:apiId', async (req, res) => {
     api = await API.findById(apiId);
     if (!api) {
       const duration = Date.now() - start;
+
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        apiId: null,
         rawApiId: apiId,
         status: 404,
         responseTime: duration,
@@ -389,7 +389,6 @@ router.all('/:apiId', async (req, res) => {
     try {
       response = await axios(axiosConfig);
     } catch (err) {
-      // Treat 304 Not Modified as success
       if (err.response && err.response.status === 304) {
         response = err.response;
       } else {
@@ -399,7 +398,7 @@ router.all('/:apiId', async (req, res) => {
 
     const duration = Date.now() - start;
 
-    // Log success including 304
+    // Log successful request
     await APILog.create({
       name: api.name,
       endpoint: api.endpoint,
@@ -415,16 +414,23 @@ router.all('/:apiId', async (req, res) => {
   } catch (err) {
     const duration = Date.now() - start;
 
-    await APILog.create({
+    // Prepare log data dynamically
+    const logData = {
       name: api ? api.name : 'Unknown',
       endpoint: api ? api.endpoint : 'Unknown',
-      apiId: api ? api._id : null,
-      rawApiId: api ? undefined : apiId,
       status: err.response?.status || 500,
       responseTime: duration,
       method: req.method,
       success: false
-    });
+    };
+
+    if (api) {
+      logData.apiId = api._id;
+    } else {
+      logData.rawApiId = apiId;
+    }
+
+    await APILog.create(logData);
 
     console.error('Error in proxy:', err.message);
 
@@ -434,11 +440,5 @@ router.all('/:apiId', async (req, res) => {
     });
   }
 });
-
-
-
-
-
-
 
 module.exports = router;

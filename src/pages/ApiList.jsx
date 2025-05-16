@@ -51,7 +51,7 @@ const ApiList = () => {
   useEffect(() => {
     const fetchApis = async () => {
       try {
-        const res = await axios.get('http://localhost:7000/api/list', {
+        const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/list`, {
           withCredentials: true,
         });
 
