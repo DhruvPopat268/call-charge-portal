@@ -24,7 +24,7 @@ const CopyButton = ({ text }) => {
 };
 
 
-const ApiList = () => {
+const UserApiList = () => {
   const [apis, setApis] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editApi, setEditApi] = useState(null); // track API being edited
@@ -306,4 +306,4 @@ const ApiList = () => {
   );
 };
 
-export default ApiList;
+export default UserApiList;

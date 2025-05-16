@@ -7,7 +7,7 @@ import axios from 'axios'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import moment from 'moment';
 
-const Dashboard = () => {
+const UserDashboard = () => {
 
   const [logs, setLogs] = useState([]);
   const [endpointUsage, setEndpointUsage] = useState([]);
@@ -143,4 +143,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default UserDashboard;

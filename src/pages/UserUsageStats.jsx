@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios'
 
-const UsageStats = () => {
+const UserUsageStats = () => {
 
   const [stats, setStats] = useState([]);
   const [dailyUsage, setDailyUsage] = useState([]);
@@ -170,4 +170,4 @@ const UsageStats = () => {
   );
 };
 
-export default UsageStats;
+export default UserUsageStats;

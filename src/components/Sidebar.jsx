@@ -1,8 +1,13 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'sonner';
+
+
 import { 
   Package,
   FileText,
@@ -17,60 +22,82 @@ import {
 } from 'lucide-react';
 
 const Sidebar = () => {
-  const { currentUser, logout, isAdmin } = useAuth();
+  // const { currentUser, logout, isAdmin } = useAuth();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+
+  let role = localStorage.getItem('role')
+  let name = localStorage.getItem('name')
 
   const menuItems = [
     {
       title: 'APIs',
       icon: <Package size={20} />,
-      path: '/dashboard/apis',
+      path: '/admin/dashboard/apis',
       admin: false
     },
     {
       title: 'API Logs',
       icon: <FileText size={20} />,
-      path: '/dashboard/logs',
+      path: '/admin/dashboard/logs',
       admin: false
     },
     {
       title: 'API Keys',
       icon: <Key size={20} />,
-      path: '/dashboard/keys',
+      path: '/admin/dashboard/keys',
       admin: false
     },
     {
       title: 'Usage Stats',
       icon: <BarChart2 size={20} />,
-      path: '/dashboard/stats',
+      path: '/admin/dashboard/stats',
       admin: false
     },
     {
       title: 'Subscription',
       icon: <Activity size={20} />,
-      path: '/dashboard/subscription',
+      path: '/admin/dashboard/subscription',
       admin: false
     },
     {
       title: 'Plans',
       icon: <Package size={20} />,
-      path: '/dashboard/plans',
-      admin: isAdmin
+      path: '/admin/dashboard/plans',
+      // admin: isAdmin
     },
     {
       title: 'Billing',
       icon: <CreditCard size={20} />,
-      path: '/dashboard/billing',
+      path: '/admin/dashboard/billing',
       admin: false
     },
     {
       title: 'Settings',
       icon: <Settings size={20} />,
-      path: '/dashboard/settings',
+      path: '/admin/dashboard/settings',
       admin: false
     },
   ];
+
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+  try {
+    await axios.post('http://localhost:7000/auth/admin/logout', {}, { withCredentials: true });
+
+    // Clear localStorage
+    localStorage.removeItem('role');
+    localStorage.removeItem('adminId');
+    localStorage.removeItem('name');
+
+    // Navigate to login page
+    navigate('/auth');
+    toast.success("Logout Successfully")
+  } catch (error) {
+    console.error('Logout failed:', error);
+  }
+};
 
   return (
     <div 
@@ -105,9 +132,8 @@ const Sidebar = () => {
         <div className="px-4 mb-6">
           {!collapsed ? (
             <div className="bg-sidebar-accent rounded-md p-3">
-              <p className="text-xs opacity-70">Logged in as</p>
-              <p className="font-medium truncate">{currentUser?.name}</p>
-              <p className="text-xs opacity-70 capitalize">{currentUser?.role}</p>
+              <p className="text-xs opacity-70">Logged in as {role}</p>
+              <p className="font-medium truncate">{name}</p> 
             </div>
           ) : (
             <div className="bg-sidebar-accent rounded-md p-2 flex justify-center">
@@ -141,7 +167,7 @@ const Sidebar = () => {
 
       <div className="p-4 border-t border-sidebar-border">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className="flex items-center justify-center w-full px-4 py-2 rounded-md hover:bg-sidebar-accent text-sidebar-foreground transition-colors"
         >
           <LogOut size={20} className={collapsed ? "mx-auto" : "mr-3"} />

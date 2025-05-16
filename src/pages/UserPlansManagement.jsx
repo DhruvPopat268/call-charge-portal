@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 // import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
-const PlansManagement = () => {
+const UserPlansManagement = () => {
   // const { isAdmin, currentUser } = useAuth();
 
   // if (!currentUser) {
@@ -293,4 +293,4 @@ const PlansManagement = () => {
   );
 };
 
-export default PlansManagement;
+export default UserPlansManagement;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import axios from 'axios';
 
-const ApiLogs = () => {
+const UserApiLogs = () => {
   const [logs, setLogs] = useState([]);
   const [filter, setFilter] = useState('all');
 
@@ -109,4 +109,4 @@ const ApiLogs = () => {
   );
 };
 
-export default ApiLogs;
+export default UserApiLogs;

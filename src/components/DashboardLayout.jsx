@@ -2,15 +2,15 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import { useAuth } from '../contexts/AuthContext';
+// import { useAuth } from '../contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 const DashboardLayout = () => {
-  const { currentUser } = useAuth();
+  // const { currentUser } = useAuth();
 
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
+  // if (!currentUser) {
+  //   return <Navigate to="/login" />;
+  // }
 
   return (
     <div className="flex h-screen bg-background">
