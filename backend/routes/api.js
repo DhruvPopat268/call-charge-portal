@@ -20,7 +20,7 @@ router.post('/add', AdminVerifyToken, async (req, res) => {
     const savedApi = await newAPI.save();
 
     // 3. Generate proxy URL
-    const proxyUrl = `http://localhost:7000/proxy/${savedApi._id}`;
+    const proxyUrl = `https://api-monitoring-and-purchasing-platform-df9e.onrender.com/proxy/${savedApi._id}`;
 
     // 4. Update the saved document with proxyUrl
     savedApi.proxyUrl = proxyUrl;

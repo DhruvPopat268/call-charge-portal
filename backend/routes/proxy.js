@@ -329,6 +329,7 @@ router.all('/:apiId', async (req, res) => {
   const { apiId } = req.params;
   let api = null;
 
+  console.log(apiId)
   try {
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
@@ -337,7 +338,7 @@ router.all('/:apiId', async (req, res) => {
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        rawApiId: apiId, // log the invalid ID
+        apiId: apiId, // log the invalid ID
         status: 400,
         responseTime: duration,
         method: req.method,
@@ -355,7 +356,7 @@ router.all('/:apiId', async (req, res) => {
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        rawApiId: apiId,
+        apiId: apiId,
         status: 404,
         responseTime: duration,
         method: req.method,
