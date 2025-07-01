@@ -19,6 +19,9 @@ connectToDb()
 app.use(cors({
     origin:[
         "http://localhost:8080",
+        "http://localhost:8081",
+        "http://localhost:3000",
+        "http://localhost:3001",
         "https://api-monitoring-and-purchasing-platform-oe4m.onrender.com"
     ],
     credentials: true
