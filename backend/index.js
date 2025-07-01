@@ -22,7 +22,8 @@ app.use(cors({
         "http://localhost:8081",
         "http://localhost:3000",
         "http://localhost:3001",
-        "https://api-monitoring-and-purchasing-platform-oe4m.onrender.com"
+        "https://api-monitoring-and-purchasing-platform-oe4m.onrender.com",
+        "https://my.geotab.com"
     ],
     credentials: true
 }));
