@@ -42,36 +42,36 @@ const Sidebar = () => {
       path: '/admin/dashboard/logs',
       admin: false
     },
-    {
-      title: 'API Keys',
-      icon: <Key size={20} />,
-      path: '/admin/dashboard/keys',
-      admin: false
-    },
+    // {
+    //   title: 'API Keys',
+    //   icon: <Key size={20} />,
+    //   path: '/admin/dashboard/keys',
+    //   admin: false
+    // },
     {
       title: 'Usage Stats',
       icon: <BarChart2 size={20} />,
       path: '/admin/dashboard/stats',
       admin: false
     },
-    {
-      title: 'Subscription',
-      icon: <Activity size={20} />,
-      path: '/admin/dashboard/subscription',
-      admin: false
-    },
+    // {
+    //   title: 'Subscription',
+    //   icon: <Activity size={20} />,
+    //   path: '/admin/dashboard/subscription',
+    //   admin: false
+    // },
     {
       title: 'Plans',
       icon: <Package size={20} />,
       path: '/admin/dashboard/plans',
       // admin: isAdmin
     },
-    {
-      title: 'Billing',
-      icon: <CreditCard size={20} />,
-      path: '/admin/dashboard/billing',
-      admin: false
-    },
+    // {
+    //   title: 'Billing',
+    //   icon: <CreditCard size={20} />,
+    //   path: '/admin/dashboard/billing',
+    //   admin: false
+    // },
     {
       title: 'Settings',
       icon: <Settings size={20} />,

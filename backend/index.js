@@ -6,7 +6,7 @@ const apiRoutes = require('./routes/api');
 const proxyRoutes = require('./routes/proxy');
 const logRoutes = require('./routes/log');
 const cookieParser = require('cookie-parser')
-
+const planRoutes = require('./routes/planRoutes');
 const cors = require('cors');
 
 const AdminauthRoutes = require('./routes/Adminauth');
@@ -33,5 +33,6 @@ app.use('/auth/user', UserauthRoutes);
 app.use('/api', apiRoutes);
 app.use('/proxy', proxyRoutes);
 app.use('/api/logs', logRoutes);
+app.use('/api/plans', planRoutes);
 
 app.listen(7000,()=>{console.log('Server is running on port 7000')})

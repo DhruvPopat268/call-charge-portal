@@ -1,241 +1,132 @@
-
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { toast } from 'sonner';
-// import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import axios from 'axios';
+import { useForm } from 'react-hook-form';
+import { Pencil, Trash2, Loader2, Plus } from 'lucide-react';
 
 const PlansManagement = () => {
-  // const { isAdmin, currentUser } = useAuth();
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editPlan, setEditPlan] = useState(null);
 
-  // if (!currentUser) {
-  //   return <Navigate to="/login" />;
-  // }
+  const { register, handleSubmit, reset } = useForm();
 
-  // if (!isAdmin) {
-  //   return <Navigate to="/dashboard" />;
-  // }
-
-  // Sample plans data with more details for admin
-  const [plans, setPlans] = useState([
-    {
-      id: 1,
-      name: 'Basic',
-      price: 19,
-      includedCalls: 10000,
-      extraCallPrice: 3.00,
-      active: true,
-      subscribers: 245,
-      revenue: 4655
-    },
-    {
-      id: 2,
-      name: 'Pro',
-      price: 49,
-      includedCalls: 50000,
-      extraCallPrice: 2.00,
-      active: true,
-      subscribers: 128,
-      revenue: 6272
-    },
-    {
-      id: 3,
-      name: 'Enterprise',
-      price: 99,
-      includedCalls: 150000,
-      extraCallPrice: 1.50,
-      active: true,
-      subscribers: 36,
-      revenue: 3564
+  const fetchPlans = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/api/plans`);
+      setPlans(Array.isArray(res.data) ? res.data : res.data.data || []);
+    } catch (err) {
+      toast.error('Error fetching plans');
+    } finally {
+      setLoading(false);
     }
-  ]);
-
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newPlan, setNewPlan] = useState({
-    name: '',
-    price: 0,
-    includedCalls: 0,
-    extraCallPrice: 0
-  });
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewPlan({
-      ...newPlan,
-      [name]: name === 'name' ? value : Number(value)
-    });
   };
 
-  const handleAddPlan = (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
-    const planWithId = {
-      ...newPlan,
-      id: plans.length + 1,
-      active: true,
-      subscribers: 0,
-      revenue: 0
-    };
+  const onSubmit = async (data) => {
+    setActionLoading(true);
+    try {
+      if (editPlan) {
+        await axios.put(`${import.meta.env.VITE_BASE_URL}/api/plans/${editPlan._id}`, data);
+        toast.success('Plan updated!');
+      } else {
+        await axios.post(`${import.meta.env.VITE_BASE_URL}/api/plans`, data);
+        toast.success('Plan created!');
+      }
 
-    setPlans([...plans, planWithId]);
-    setShowAddForm(false);
-    setNewPlan({
-      name: '',
-      price: 0,
-      includedCalls: 0,
-      extraCallPrice: 0
-    });
-
-    toast.success('New plan created successfully!');
+      reset();
+      setEditPlan(null);
+      setShowForm(false);
+      fetchPlans();
+    } catch (err) {
+      toast.error('Save failed');
+      console.error(err);
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const togglePlanStatus = (id) => {
-    setPlans(plans.map(plan => 
-      plan.id === id ? { ...plan, active: !plan.active } : plan
-    ));
-    
-    const plan = plans.find(p => p.id === id);
-    toast.success(`${plan.name} plan is now ${plan.active ? 'inactive' : 'active'}`);
+  const handleDelete = async (id) => {
+    setActionLoading(true);
+    try {
+      await axios.delete(`${import.meta.env.VITE_BASE_URL}/api/plans/${id}`);
+      toast.success('Plan deleted');
+      fetchPlans();
+    } catch {
+      toast.error('Delete failed');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold">Plans Management</h1>
-          <p className="text-muted-foreground">
-            Create and manage subscription plans
-          </p>
-        </div>
-
+        <h1 className="text-2xl font-bold">Plans</h1>
         <button
-          className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-          onClick={() => setShowAddForm(!showAddForm)}
+          className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 flex items-center gap-2"
+          onClick={() => {
+            setEditPlan(null);
+            reset();
+            setShowForm(true);
+          }}
         >
-          {showAddForm ? 'Cancel' : 'Create New Plan'}
+          <Plus size={16} /> Create New
         </button>
       </div>
 
-      {showAddForm && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Create New Plan</h2>
-          <form onSubmit={handleAddPlan} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Plan Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  required
-                  value={newPlan.name}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-input rounded-md"
-                  placeholder="e.g., Premium"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Monthly Price ($)</label>
-                <input
-                  type="number"
-                  name="price"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={newPlan.price}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-input rounded-md"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Included API Calls</label>
-                <input
-                  type="number"
-                  name="includedCalls"
-                  required
-                  min="0"
-                  value={newPlan.includedCalls}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-input rounded-md"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Extra Calls Price ($ per 1000)</label>
-                <input
-                  type="number"
-                  name="extraCallPrice"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={newPlan.extraCallPrice}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border border-input rounded-md"
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90"
-              >
-                Create Plan
-              </button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      <Card className="p-6">
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr className="bg-muted">
-                <th className="px-4 py-2 text-left text-sm font-medium">Plan</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Price</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Included Calls</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Extra Call Price</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Subscribers</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Monthly Revenue</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
-                <th className="px-4 py-2 text-left text-sm font-medium">Actions</th>
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="animate-spin" size={32} />
+        </div>
+      ) : plans.length === 0 ? (
+        <div className="text-center text-muted-foreground py-10 space-y-2">
+          <p className="text-lg font-medium">No plans found.</p>
+          <p className="text-sm">Start by adding your first plan.</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto border rounded-lg shadow-sm">
+          <table className="min-w-full table-auto text-sm">
+            <thead className="bg-muted">
+              <tr>
+                <th className="text-left px-4 py-2 font-medium">Name</th>
+                <th className="text-left px-4 py-2 font-medium">Price</th>
+                <th className="text-left px-4 py-2 font-medium">Included Calls</th>
+                <th className="text-left px-4 py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {plans.map((plan) => (
-                <tr key={plan.id} className="border-b border-border hover:bg-muted/50">
-                  <td className="px-4 py-3 font-medium">{plan.name}</td>
-                  <td className="px-4 py-3">${plan.price}</td>
+                <tr key={plan._id} className="border-t hover:bg-muted/40 transition">
+                  <td className="px-4 py-3">{plan.name}</td>
+                <td className="px-4 py-3">£{plan.price.toFixed(2)}</td>
+
                   <td className="px-4 py-3">{plan.includedCalls.toLocaleString()}</td>
-                  <td className="px-4 py-3">${plan.extraCallPrice.toFixed(2)}</td>
-                  <td className="px-4 py-3">{plan.subscribers}</td>
-                  <td className="px-4 py-3">${plan.revenue.toLocaleString()}</td>
                   <td className="px-4 py-3">
-                    <span 
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        plan.active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {plan.active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex space-x-2">
+                    <div className="flex items-center space-x-3">
                       <button
-                        className="text-xs text-primary hover:underline"
-                        onClick={() => toast.info('Edit plan functionality would go here')}
+                        onClick={() => {
+                          setEditPlan(plan);
+                          reset(plan);
+                          setShowForm(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800"
                       >
-                        Edit
+                        <Pencil size={18} />
                       </button>
                       <button
-                        className={`text-xs ${plan.active ? 'text-yellow-600' : 'text-green-600'} hover:underline`}
-                        onClick={() => togglePlanStatus(plan.id)}
+                        onClick={() => handleDelete(plan._id)}
+                        className="text-red-600 hover:text-red-800"
+                        disabled={actionLoading}
                       >
-                        {plan.active ? 'Deactivate' : 'Activate'}
+                        <Trash2 size={18} />
                       </button>
                     </div>
                   </td>
@@ -244,51 +135,62 @@ const PlansManagement = () => {
             </tbody>
           </table>
         </div>
-      </Card>
+      )}
 
-      <Card className="p-6">
-        <h3 className="font-semibold mb-4">Plan Settings</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Stripe Webhook URL</label>
-            <div className="flex items-center space-x-2">
+      {showForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white p-6 rounded-md shadow-md w-full max-w-md relative">
+            <h2 className="text-xl font-semibold mb-4">
+              {editPlan ? 'Edit Plan' : 'Create New Plan'}
+            </h2>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <input
-                type="text"
-                readOnly
-                value="https://yourdomain.com/api/stripe/webhook"
-                className="flex-1 p-2 border border-input rounded-md bg-muted"
+                {...register('name')}
+                placeholder="Plan Name"
+                className="w-full p-2 border rounded"
+                required
               />
-              <button 
-                className="px-3 py-2 text-primary border border-primary rounded-md hover:bg-primary/10"
-                onClick={() => {
-                  navigator.clipboard.writeText("https://yourdomain.com/api/stripe/webhook");
-                  toast.success('Webhook URL copied to clipboard');
-                }}
-              >
-                Copy
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Use this URL in your Stripe webhook settings to receive subscription events.
-            </p>
-          </div>
+              <input
+                {...register('price')}
+                placeholder="Price"
+                type="number"
+                className="w-full p-2 border rounded"
+                required
+              />
+              <input
+                {...register('includedCalls')}
+                placeholder="Included Calls"
+                type="number"
+                className="w-full p-2 border rounded"
+                required
+              />
+             
 
-          <div className="pt-4 border-t border-border">
-            <button
-              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 mr-2"
-              onClick={() => toast.info('Stripe settings configuration would go here')}
-            >
-              Configure Stripe Settings
-            </button>
-            <button
-              className="px-4 py-2 border border-input rounded-md hover:bg-accent"
-              onClick={() => toast.info('Test Stripe webhook functionality')}
-            >
-              Test Webhook
-            </button>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowForm(false);
+                    setEditPlan(null);
+                    reset();
+                  }}
+                  className="px-4 py-2 border rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-white rounded hover:bg-primary/90 flex items-center"
+                >
+                  {actionLoading && <Loader2 className="animate-spin mr-2" size={16} />}
+                  {editPlan ? 'Update Plan' : 'Create Plan'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </Card>
+      )}
     </div>
   );
 };
