@@ -1,136 +1,3 @@
-// // const express = require('express');
-// // const axios = require('axios');
-// // const API = require('../models/API');
-// // const APILog = require('../models/APILog');
-// // const router = express.Router();
-
-// // router.all('/:apiId', async (req, res) => {
-// //   try {
-// //     const { apiId } = req.params;
-
-// //     const api = await API.findById(apiId);
-// //     if (!api) return res.status(404).json({ message: 'API not found' });
-
-// //     const start = Date.now();
-
-// //     const axiosConfig = {
-// //       method: api.method,
-// //       url: api.url,
-// //       headers: req.headers,
-// //       data: req.body
-// //     };
-
-// //     const response = await axios(axiosConfig);
-
-// //     const duration = Date.now() - start;
-
-// //     // Log the request
-// //     await APILog.create({
-// //       apiId: api._id,
-// //       status: response.status,
-// //       responseTime: duration,
-// //       method: api.method,
-// //       success: true
-// //     });
-
-// //     // Return actual response to caller
-// //     res.status(response.status).send(response.data);
-
-// //   } catch (err) {
-// //     console.log(err)
-// //     const duration = Date.now() - start;
-
-// //     // Even if error, log it
-// //     await APILog.create({
-// //       apiId: req.params.apiId,
-// //       status: err.response?.status || 500,
-// //       responseTime: duration,
-// //       method: req.method,
-// //       success: false
-// //     });
-
-// //     res.status(err.response?.status || 500).json({ message: 'Proxy error', error: err.message });
-// //   }
-// // });
-
-// // module.exports = router;
-
-
-// -------------------------------------> https agent do not use in production 
-
-
-// const express = require('express');
-// const axios = require('axios');
-// const https = require('https');
-// const API = require('../models/API');
-// const APILog = require('../models/APILog');
-// const router = express.Router();
-
-// router.all('/:apiId', async (req, res) => {
-//   const start = Date.now(); // To calculate response time
-
-//   try {
-//     const { apiId } = req.params;
-
-//     const api = await API.findById(apiId);
-//     if (!api) return res.status(404).json({ message: 'API not found' });
-
-//     // Create HTTPS agent to handle TLS issues (disable cert validation for local only)
-//     const httpsAgent = new https.Agent({
-//       rejectUnauthorized: false,
-//       servername: new URL(api.url).hostname // Fix SNI issue
-//     });
-
-//     // Clone headers excluding host (which can break proxy behavior)
-//     const filteredHeaders = { ...req.headers };
-//     delete filteredHeaders.host;
-
-//     const axiosConfig = {
-//       method: api.method,
-//       url: api.url,
-//       headers: filteredHeaders,
-//       data: req.body,
-//       httpsAgent
-//     };
-
-//     const response = await axios(axiosConfig);
-//     const duration = Date.now() - start;
-
-//     // Log success
-//     await APILog.create({
-//       apiId: api._id,
-//       status: response.status,
-//       responseTime: duration,
-//       method: api.method,
-//       success: true
-//     });
-
-//     res.status(response.status).send(response.data);
-
-//   } catch (err) {
-//     const duration = Date.now() - start;
-
-//     // Log failure
-//     await APILog.create({
-//       apiId: req.params.apiId,
-//       status: err.response?.status || 500,
-//       responseTime: duration,
-//       method: req.method,
-//       success: false
-//     });
-
-//     console.error('Proxy Error:', err.message);
-//     res.status(err.response?.status || 500).json({
-//       message: 'Proxy error',
-//       error: err.message
-//     });
-//   }
-// });
-
-// module.exports = router;
-
-//----------------------->> for invalid api id also will count as failure
-
 const express = require('express');
 const axios = require('axios');
 const https = require('https');
@@ -324,12 +191,16 @@ router.get('/stats', async (req, res) => {
   }
 });
 
-router.all('/:apiId', async (req, res) => {
+router.post('/:apiId', async (req, res) => {
   const start = Date.now();
   const { apiId } = req.params;
   let api = null;
 
-  console.log(apiId)
+  console.log('Proxy request for apiId:', apiId);
+  console.log('Request method:', req.method);
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+
   try {
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
@@ -338,7 +209,7 @@ router.all('/:apiId', async (req, res) => {
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        apiId: apiId, // log the invalid ID
+        apiId: apiId,
         status: 400,
         responseTime: duration,
         method: req.method,
@@ -366,56 +237,110 @@ router.all('/:apiId', async (req, res) => {
       return res.status(404).json({ message: 'API not found' });
     }
 
+    console.log('Found API:', api.name, 'Method:', api.method, 'Endpoint:', api.endpoint);
+
     // Setup HTTPS agent
     const httpsAgent = new https.Agent({
       rejectUnauthorized: true,
       servername: new URL(api.endpoint).hostname
     });
 
-    // Clone headers, strip problematic ones
+    // Clone headers and clean them up
     const headers = { ...req.headers };
+    
+    // Remove proxy-specific headers that shouldn't be forwarded
     delete headers.host;
     delete headers['if-none-match'];
     delete headers['if-modified-since'];
+    delete headers['content-length']; // Let axios handle this
+    delete headers.connection;
+    delete headers['transfer-encoding'];
+
+    // Ensure Content-Type is set for POST requests with body
+    if ((api.method.toLowerCase() === 'post' || api.method.toLowerCase() === 'put' || api.method.toLowerCase() === 'patch') && req.body) {
+      if (!headers['content-type']) {
+        headers['content-type'] = 'application/json';
+      }
+    }
 
     const axiosConfig = {
-      method: api.method,
+      method: api.method.toLowerCase(), // Ensure method is lowercase
       url: api.endpoint,
       headers,
-      data: req.body,
-      httpsAgent
+      httpsAgent,
+      timeout: 30000, // 30 second timeout
+      validateStatus: function (status) {
+        // Accept any status code - we'll handle errors manually
+        return true;
+      }
     };
+
+    // Only add data/params based on the method and if there's a body
+    if (['post', 'put', 'patch'].includes(api.method.toLowerCase())) {
+      if (req.body && Object.keys(req.body).length > 0) {
+        axiosConfig.data = req.body;
+      }
+    } else if (['get', 'delete'].includes(api.method.toLowerCase())) {
+      if (req.query && Object.keys(req.query).length > 0) {
+        axiosConfig.params = req.query;
+      }
+    }
+
+    console.log('Axios config:', JSON.stringify(axiosConfig, null, 2));
 
     let response;
     try {
       response = await axios(axiosConfig);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
     } catch (err) {
-      if (err.response && err.response.status === 304) {
+      // Handle axios errors
+      if (err.response) {
+        // Server responded with error status
         response = err.response;
+        console.log('Error response status:', response.status);
+        console.log('Error response data:', response.data);
+      } else if (err.request) {
+        // Request was made but no response received
+        console.error('No response received:', err.message);
+        throw new Error('No response from target API');
       } else {
+        // Something else happened
+        console.error('Request setup error:', err.message);
         throw err;
       }
     }
 
     const duration = Date.now() - start;
 
-    // Log successful request
+    // Log the request
     await APILog.create({
       name: api.name,
       endpoint: api.endpoint,
       apiId: api._id,
       status: response.status,
       responseTime: duration,
-      method: api.method,
-      success: true
+      method: req.method,
+      success: response.status >= 200 && response.status < 400
     });
 
-    return res.status(response.status).send(response.data || null);
+    // Return the response
+    res.status(response.status);
+    
+    // Set response headers if needed
+    if (response.headers['content-type']) {
+      res.set('content-type', response.headers['content-type']);
+    }
+    
+    return res.send(response.data || null);
 
   } catch (err) {
     const duration = Date.now() - start;
 
-    // Prepare log data dynamically
+    console.error('Proxy error:', err.message);
+    console.error('Error stack:', err.stack);
+
+    // Prepare log data
     const logData = {
       name: api ? api.name : 'Unknown',
       endpoint: api ? api.endpoint : 'Unknown',
@@ -433,11 +358,9 @@ router.all('/:apiId', async (req, res) => {
 
     await APILog.create(logData);
 
-    console.error('Error in proxy:', err.message);
-
     return res.status(err.response?.status || 500).json({
       message: 'Proxy error',
-      error: err.message
+      error: err.response?.data || err.message
     });
   }
 });
