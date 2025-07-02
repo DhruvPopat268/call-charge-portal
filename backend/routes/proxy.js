@@ -191,6 +191,180 @@ router.get('/stats', async (req, res) => {
   }
 });
 
+router.get('/:apiId', async (req, res) => {
+  const start = Date.now();
+  const { apiId } = req.params;
+  let api = null;
+
+  console.log('Proxy request for apiId:', apiId);
+  console.log('Request method:', req.method);
+  console.log('Request body:', req.body);
+  console.log('Request headers:', req.headers);
+
+  try {
+    // Validate API ID format
+    if (!mongoose.Types.ObjectId.isValid(apiId)) {
+      const duration = Date.now() - start;
+
+      await APILog.create({
+        name: 'Unknown',
+        endpoint: 'Unknown',
+        apiId: apiId,
+        status: 400,
+        responseTime: duration,
+        method: req.method,
+        success: false
+      });
+
+      return res.status(400).json({ message: 'Invalid API ID' });
+    }
+
+    // Retrieve API document
+    api = await API.findById(apiId);
+    if (!api) {
+      const duration = Date.now() - start;
+
+      await APILog.create({
+        name: 'Unknown',
+        endpoint: 'Unknown',
+        apiId: apiId,
+        status: 404,
+        responseTime: duration,
+        method: req.method,
+        success: false
+      });
+
+      return res.status(404).json({ message: 'API not found' });
+    }
+
+    console.log('Found API:', api.name, 'Method:', api.method, 'Endpoint:', api.endpoint);
+
+    // Setup HTTPS agent
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: true,
+      servername: new URL(api.endpoint).hostname
+    });
+
+    // Clone headers and clean them up
+    const headers = { ...req.headers };
+    
+    // Remove proxy-specific headers that shouldn't be forwarded
+    delete headers.host;
+    delete headers['if-none-match'];
+    delete headers['if-modified-since'];
+    delete headers['content-length']; // Let axios handle this
+    delete headers.connection;
+    delete headers['transfer-encoding'];
+
+    // Ensure Content-Type is set for POST requests with body
+    if ((api.method.toLowerCase() === 'post' || api.method.toLowerCase() === 'put' || api.method.toLowerCase() === 'patch') && req.body) {
+      if (!headers['content-type']) {
+        headers['content-type'] = 'application/json';
+      }
+    }
+
+    const axiosConfig = {
+      method: api.method.toLowerCase(), // Ensure method is lowercase
+      url: api.endpoint,
+      headers,
+      httpsAgent,
+      timeout: 30000, // 30 second timeout
+      validateStatus: function (status) {
+        // Accept any status code - we'll handle errors manually
+        return true;
+      }
+    };
+
+    // Only add data/params based on the method and if there's a body
+    if (['post', 'put', 'patch'].includes(api.method.toLowerCase())) {
+      if (req.body && Object.keys(req.body).length > 0) {
+        axiosConfig.data = req.body;
+      }
+    } else if (['get', 'delete'].includes(api.method.toLowerCase())) {
+      if (req.query && Object.keys(req.query).length > 0) {
+        axiosConfig.params = req.query;
+      }
+    }
+
+    console.log('Axios config:', JSON.stringify(axiosConfig, null, 2));
+
+    let response;
+    try {
+      response = await axios(axiosConfig);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
+    } catch (err) {
+      // Handle axios errors
+      if (err.response) {
+        // Server responded with error status
+        response = err.response;
+        console.log('Error response status:', response.status);
+        console.log('Error response data:', response.data);
+      } else if (err.request) {
+        // Request was made but no response received
+        console.error('No response received:', err.message);
+        throw new Error('No response from target API');
+      } else {
+        // Something else happened
+        console.error('Request setup error:', err.message);
+        throw err;
+      }
+    }
+
+    const duration = Date.now() - start;
+
+    // Log the request
+    await APILog.create({
+      name: api.name,
+      endpoint: api.endpoint,
+      apiId: api._id,
+      status: response.status,
+      responseTime: duration,
+      method: req.method,
+      success: response.status >= 200 && response.status < 400
+    });
+
+    // Return the response
+    res.status(response.status);
+    
+    // Set response headers if needed
+    if (response.headers['content-type']) {
+      res.set('content-type', response.headers['content-type']);
+    }
+    
+    return res.send(response.data || null);
+
+  } catch (err) {
+    const duration = Date.now() - start;
+
+    console.error('Proxy error:', err.message);
+    console.error('Error stack:', err.stack);
+
+    // Prepare log data
+    const logData = {
+      name: api ? api.name : 'Unknown',
+      endpoint: api ? api.endpoint : 'Unknown',
+      status: err.response?.status || 500,
+      responseTime: duration,
+      method: req.method,
+      success: false
+    };
+
+    if (api) {
+      logData.apiId = api._id;
+    } else {
+      logData.rawApiId = apiId;
+    }
+
+    await APILog.create(logData);
+
+    return res.status(err.response?.status || 500).json({
+      message: 'Proxy error',
+      error: err.response?.data || err.message
+    });
+  }
+});
+
 router.post('/:apiId', async (req, res) => {
   const start = Date.now();
   const { apiId } = req.params;
