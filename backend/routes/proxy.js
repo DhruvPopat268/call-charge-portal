@@ -319,15 +319,15 @@ router.get('/:apiId', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
       const duration = Date.now() - start;
 
-      // await APILog.create({
-      //   name: 'Unknown',
-      //   endpoint: 'Unknown',
-      //   apiId: apiId,
-      //   status: 400,
-      //   responseTime: duration,
-      //   method: req.method,
-      //   success: false
-      // });
+      await APILog.create({
+        name: 'Unknown',
+        endpoint: 'Unknown',
+        apiId: apiId,
+        status: 400,
+        responseTime: duration,
+        method: req.method,
+        success: false
+      });
 
       return res.status(400).json({ message: 'Invalid API ID' });
     }
@@ -337,15 +337,15 @@ router.get('/:apiId', async (req, res) => {
     if (!api) {
       const duration = Date.now() - start;
 
-      // await APILog.create({
-      //   name: 'Unknown',
-      //   endpoint: 'Unknown',
-      //   apiId: apiId,
-      //   status: 404,
-      //   responseTime: duration,
-      //   method: req.method,
-      //   success: false
-      // });
+      await APILog.create({
+        name: 'Unknown',
+        endpoint: 'Unknown',
+        apiId: apiId,
+        status: 404,
+        responseTime: duration,
+        method: req.method,
+        success: false
+      });
 
       return res.status(404).json({ message: 'API not found' });
     }
@@ -427,15 +427,15 @@ router.get('/:apiId', async (req, res) => {
     const duration = Date.now() - start;
 
     // Log the request
-    // await APILog.create({
-    //   name: api.name,
-    //   endpoint: api.endpoint,
-    //   apiId: api._id,
-    //   status: response.status,
-    //   responseTime: duration,
-    //   method: req.method,
-    //   success: response.status >= 200 && response.status < 400
-    // });
+    await APILog.create({
+      name: api.name,
+      endpoint: api.endpoint,
+      apiId: api._id,
+      status: response.status,
+      responseTime: duration,
+      method: req.method,
+      success: response.status >= 200 && response.status < 400
+    });
 
     // Return the response
     res.status(response.status);
