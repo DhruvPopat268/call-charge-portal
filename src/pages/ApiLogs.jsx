@@ -70,6 +70,7 @@ const ApiLogs = () => {
               <tr className="bg-muted">
                 <th className="px-4 py-2 text-left text-sm font-medium">API Name</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Method</th>
+                <th className="px-4 py-2 text-left text-sm font-medium">User</th>
 
                 <th className="px-4 py-2 text-left text-sm font-medium">Endpoint</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
@@ -82,6 +83,7 @@ const ApiLogs = () => {
                 <tr key={log._id} className="border-b border-border hover:bg-muted/50">
                   <td className="px-4 py-3 text-sm">{log.name}</td>
                   <td className="px-4 py-3 text-sm">{log.method}</td>
+                  <td className="px-4 py-3 text-sm">{log.userId}</td>
 
                   <td className="px-4 py-3 text-sm font-mono">{log.endpoint}</td>
                   <td className="px-4 py-3 text-sm">

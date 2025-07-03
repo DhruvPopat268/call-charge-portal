@@ -206,15 +206,15 @@ router.get('/:apiId', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
       const duration = Date.now() - start;
 
-      await APILog.create({
-        name: 'Unknown',
-        endpoint: 'Unknown',
-        apiId: apiId,
-        status: 400,
-        responseTime: duration,
-        method: req.method,
-        success: false
-      });
+      // await APILog.create({
+      //   name: 'Unknown',
+      //   endpoint: 'Unknown',
+      //   apiId: apiId,
+      //   status: 400,
+      //   responseTime: duration,
+      //   method: req.method,
+      //   success: false
+      // });
 
       return res.status(400).json({ message: 'Invalid API ID' });
     }
@@ -224,15 +224,15 @@ router.get('/:apiId', async (req, res) => {
     if (!api) {
       const duration = Date.now() - start;
 
-      await APILog.create({
-        name: 'Unknown',
-        endpoint: 'Unknown',
-        apiId: apiId,
-        status: 404,
-        responseTime: duration,
-        method: req.method,
-        success: false
-      });
+      // await APILog.create({
+      //   name: 'Unknown',
+      //   endpoint: 'Unknown',
+      //   apiId: apiId,
+      //   status: 404,
+      //   responseTime: duration,
+      //   method: req.method,
+      //   success: false
+      // });
 
       return res.status(404).json({ message: 'API not found' });
     }
@@ -314,15 +314,15 @@ router.get('/:apiId', async (req, res) => {
     const duration = Date.now() - start;
 
     // Log the request
-    await APILog.create({
-      name: api.name,
-      endpoint: api.endpoint,
-      apiId: api._id,
-      status: response.status,
-      responseTime: duration,
-      method: req.method,
-      success: response.status >= 200 && response.status < 400
-    });
+    // await APILog.create({
+    //   name: api.name,
+    //   endpoint: api.endpoint,
+    //   apiId: api._id,
+    //   status: response.status,
+    //   responseTime: duration,
+    //   method: req.method,
+    //   success: response.status >= 200 && response.status < 400
+    // });
 
     // Return the response
     res.status(response.status);
@@ -356,7 +356,7 @@ router.get('/:apiId', async (req, res) => {
       logData.rawApiId = apiId;
     }
 
-    await APILog.create(logData);
+    // await APILog.create(logData);
 
     return res.status(err.response?.status || 500).json({
       message: 'Proxy error',
@@ -368,13 +368,10 @@ router.get('/:apiId', async (req, res) => {
 router.post('/:apiId', async (req, res) => {
   const start = Date.now();
   const { apiId } = req.params;
+  const { userId } = req.body; // Extract userId from request body
   let api = null;
 
-  console.log('Proxy request for apiId:', apiId);
-  console.log('Request method:', req.method);
-  console.log('Request body:', req.body);
-  console.log('Request headers:', req.headers);
-
+console.log(userId)
   try {
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
@@ -384,6 +381,7 @@ router.post('/:apiId', async (req, res) => {
         name: 'Unknown',
         endpoint: 'Unknown',
         apiId: apiId,
+        userId: userId || null, // Add userId to log
         status: 400,
         responseTime: duration,
         method: req.method,
@@ -402,6 +400,7 @@ router.post('/:apiId', async (req, res) => {
         name: 'Unknown',
         endpoint: 'Unknown',
         apiId: apiId,
+        userId: userId || null, // Add userId to log
         status: 404,
         responseTime: duration,
         method: req.method,
@@ -437,6 +436,10 @@ router.post('/:apiId', async (req, res) => {
       }
     }
 
+    // Prepare request body - exclude userId from being sent to target API
+    let requestBody = { ...req.body };
+    delete requestBody.userId; // Remove userId from the body that goes to target API
+
     const axiosConfig = {
       method: api.method.toLowerCase(), // Ensure method is lowercase
       url: api.endpoint,
@@ -451,8 +454,8 @@ router.post('/:apiId', async (req, res) => {
 
     // Only add data/params based on the method and if there's a body
     if (['post', 'put', 'patch'].includes(api.method.toLowerCase())) {
-      if (req.body && Object.keys(req.body).length > 0) {
-        axiosConfig.data = req.body;
+      if (requestBody && Object.keys(requestBody).length > 0) {
+        axiosConfig.data = requestBody;
       }
     } else if (['get', 'delete'].includes(api.method.toLowerCase())) {
       if (req.query && Object.keys(req.query).length > 0) {
@@ -487,11 +490,12 @@ router.post('/:apiId', async (req, res) => {
 
     const duration = Date.now() - start;
 
-    // Log the request
+    // Log the request with userId
     await APILog.create({
       name: api.name,
       endpoint: api.endpoint,
       apiId: api._id,
+      userId: userId || null, // Add userId to log
       status: response.status,
       responseTime: duration,
       method: req.method,
@@ -514,10 +518,11 @@ router.post('/:apiId', async (req, res) => {
     console.error('Proxy error:', err.message);
     console.error('Error stack:', err.stack);
 
-    // Prepare log data
+    // Prepare log data with userId
     const logData = {
       name: api ? api.name : 'Unknown',
       endpoint: api ? api.endpoint : 'Unknown',
+      userId: userId || null, // Add userId to log
       status: err.response?.status || 500,
       responseTime: duration,
       method: req.method,

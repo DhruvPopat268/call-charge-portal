@@ -6,6 +6,7 @@ const apiLogSchema = new mongoose.Schema({
     ref: 'API',
     required: true
   },
+  userId:String,
   name:String,
   endpoint:String,
   status: Number,
