@@ -17,6 +17,21 @@ router.get('/logs', async (req, res) => {
   }
 })
 
+router.post('/logs', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    
+
+    const logs = await APILog.find({userId});
+
+    res.json(logs);
+  } catch (err) {
+    console.error('Error fetching user logs:', err.message);
+    res.status(500).json({ message: 'Failed to fetch logs', error: err.message });
+  }
+});
+
 router.get('/logs/stats', async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
@@ -60,6 +75,58 @@ router.get('/logs/stats', async (req, res) => {
   }
 });
 
+router.post('/logs/stats', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Fetch logs for this user from last 7 days
+    const logs = await APILog.find({
+      userId: userId,
+      timestamp: { $gte: sevenDaysAgo }
+    });
+
+    if (logs.length === 0) {
+      return res.json({
+        totalCalls: 0,
+        averageCalls: 0,
+        peakDay: 'N/A',
+        peakDayCalls: 0
+      });
+    }
+
+    const totalCalls = logs.length;
+    const dailyCounts = {};
+
+    logs.forEach(log => {
+      const date = new Date(log.timestamp);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+    });
+
+    const peakDay = Object.keys(dailyCounts).reduce((a, b) => dailyCounts[a] > dailyCounts[b] ? a : b);
+    const peakDayCalls = dailyCounts[peakDay];
+    const averageCalls = totalCalls / 7;
+
+    res.json({
+      totalCalls,
+      averageCalls: Math.round(averageCalls),
+      peakDay,
+      peakDayCalls
+    });
+
+  } catch (err) {
+    console.error('Error getting user log stats:', err.message);
+    res.status(500).json({ message: 'Error getting log stats', error: err.message });
+  }
+});
+
 router.get('/logs/daily-usage', async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
@@ -94,6 +161,52 @@ router.get('/logs/daily-usage', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch daily usage', error: err.message });
   }
 });
+
+router.post('/logs/daily-usage', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Include today
+
+    // Fetch logs only for the given user
+    const logs = await APILog.find({
+      userId: userId,
+      timestamp: { $gte: sevenDaysAgo }
+    });
+
+    const usageMap = {};
+
+    logs.forEach(log => {
+      const date = new Date(log.timestamp);
+      const key = date.toISOString().slice(0, 10); // Format: "YYYY-MM-DD"
+      usageMap[key] = (usageMap[key] || 0) + 1;
+    });
+
+    // Generate last 7 days including today
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+
+      result.push({
+        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        calls: usageMap[key] || 0
+      });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error getting daily usage:', err.message);
+    res.status(500).json({ message: 'Failed to fetch daily usage', error: err.message });
+  }
+});
+
 
 router.get('/logs/usage-by-api', async (req, res) => {
   try {
