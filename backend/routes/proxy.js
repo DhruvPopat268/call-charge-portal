@@ -21,9 +21,7 @@ router.post('/logs', async (req, res) => {
   try {
     const { userId } = req.body;
 
-    
-
-    const logs = await APILog.find({userId});
+    const logs = await APILog.find({ userId }).sort({ timestamp: -1 });
 
     res.json(logs);
   } catch (err) {
@@ -360,7 +358,7 @@ router.get('/:apiId', async (req, res) => {
 
     // Clone headers and clean them up
     const headers = { ...req.headers };
-    
+
     // Remove proxy-specific headers that shouldn't be forwarded
     delete headers.host;
     delete headers['if-none-match'];
@@ -439,12 +437,12 @@ router.get('/:apiId', async (req, res) => {
 
     // Return the response
     res.status(response.status);
-    
+
     // Set response headers if needed
     if (response.headers['content-type']) {
       res.set('content-type', response.headers['content-type']);
     }
-    
+
     return res.send(response.data || null);
 
   } catch (err) {
@@ -484,7 +482,7 @@ router.post('/:apiId', async (req, res) => {
   const { userId } = req.body; // Extract userId from request body
   let api = null;
 
-console.log(userId)
+  console.log(userId)
   try {
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
@@ -533,7 +531,7 @@ console.log(userId)
 
     // Clone headers and clean them up
     const headers = { ...req.headers };
-    
+
     // Remove proxy-specific headers that shouldn't be forwarded
     delete headers.host;
     delete headers['if-none-match'];
@@ -617,12 +615,12 @@ console.log(userId)
 
     // Return the response
     res.status(response.status);
-    
+
     // Set response headers if needed
     if (response.headers['content-type']) {
       res.set('content-type', response.headers['content-type']);
     }
-    
+
     return res.send(response.data || null);
 
   } catch (err) {
