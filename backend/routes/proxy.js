@@ -488,13 +488,10 @@ router.post('/logs', async (req, res) => {
 router.post('/:apiId', async (req, res) => {
   const start = Date.now();
   const { apiId } = req.params;
-  const { userId, database } = req.body; // ✅ Extract both userId and database
   let api = null;
 
   try {
-    if (!userId || !database) {
-      return res.status(400).json({ message: 'userId and database are required' });
-    }
+
 
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
