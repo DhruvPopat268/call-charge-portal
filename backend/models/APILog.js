@@ -12,7 +12,6 @@ const apiLogSchema = new mongoose.Schema({
   },
   database: {   // ✅ added
     type: String,
-    required: true
   },
   name: String,
   endpoint: String,
