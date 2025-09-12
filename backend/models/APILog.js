@@ -6,9 +6,16 @@ const apiLogSchema = new mongoose.Schema({
     ref: 'API',
     required: true
   },
-  userId:String,
-  name:String,
-  endpoint:String,
+  userId: {
+    type: String,
+    required: true
+  },
+  database: {   // ✅ added
+    type: String,
+    required: true
+  },
+  name: String,
+  endpoint: String,
   status: Number,
   responseTime: Number, // in ms
   method: String,
@@ -18,5 +25,8 @@ const apiLogSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// ✅ Helpful compound index so queries by user+database are faster
+apiLogSchema.index({ userId: 1, database: 1, timestamp: -1 });
 
 module.exports = mongoose.model('APILog', apiLogSchema);
