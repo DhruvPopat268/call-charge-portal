@@ -8,7 +8,7 @@ const apiLogSchema = new mongoose.Schema({
   },
   userId: {
     type: String,
-    required: true
+    // required: true
   },
   database: {   // ✅ added
     type: String,
