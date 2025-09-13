@@ -10,15 +10,18 @@ const ApiLogs = () => {
     const fetchLogs = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_BASE_URL}/proxy/logs`);
-        console.log(res.data)
-        setLogs(res.data); // <- Use .data to access actual logs
+        
+        
+        const filteredLogs = res.data.filter(log => log.method !== 'GET');
+  
+        setLogs(filteredLogs);
       } catch (error) {
         console.error('Error fetching logs:', error);
       }
     };
-
     fetchLogs();
   }, []);
+
 
   const getStatusColor = (status) => {
     if (status >= 200 && status < 300) return 'bg-green-500';
@@ -36,10 +39,10 @@ const ApiLogs = () => {
     filter === 'all'
       ? logs
       : logs.filter((log) => {
-          if (filter === 'success') return log.status >= 200 && log.status < 300;
-          if (filter === 'error') return log.status >= 400;
-          return true;
-        });
+        if (filter === 'success') return log.status >= 200 && log.status < 300;
+        if (filter === 'error') return log.status >= 400;
+        return true;
+      });
 
   return (
     <div className="space-y-6">
@@ -71,7 +74,7 @@ const ApiLogs = () => {
                 <th className="px-4 py-2 text-left text-sm font-medium">API Name</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Method</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">User</th>
-
+                <th className="px-4 py-2 text-left text-sm font-medium">Database</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Endpoint</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Status</th>
                 <th className="px-4 py-2 text-left text-sm font-medium">Response Time</th>
@@ -84,7 +87,7 @@ const ApiLogs = () => {
                   <td className="px-4 py-3 text-sm">{log.name}</td>
                   <td className="px-4 py-3 text-sm">{log.method}</td>
                   <td className="px-4 py-3 text-sm">{log.userId}</td>
-
+                  <td className="px-4 py-3 text-sm">{log.database}</td>
                   <td className="px-4 py-3 text-sm font-mono">{log.endpoint}</td>
                   <td className="px-4 py-3 text-sm">
                     <span

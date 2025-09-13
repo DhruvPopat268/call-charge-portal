@@ -60,7 +60,7 @@ const App = () => (
 
             
             {/* Redirect root to dashboard or login */}
-            {/* <Route path="/" element={<Login />} /> */}
+            <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Auth/>}/>
             
             {/* <Route path="*" element={<NotFound />} /> */}

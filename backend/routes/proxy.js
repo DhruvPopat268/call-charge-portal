@@ -17,6 +17,21 @@ router.get('/logs', async (req, res) => {
   }
 })
 
+router.post('/logs', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+
+
+    const logs = await APILog.find({ userId });
+
+    res.json(logs);
+  } catch (err) {
+    console.error('Error fetching user logs:', err.message);
+    res.status(500).json({ message: 'Failed to fetch logs', error: err.message });
+  }
+});
+
 router.get('/logs/stats', async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
@@ -60,6 +75,58 @@ router.get('/logs/stats', async (req, res) => {
   }
 });
 
+router.post('/logs/stats', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Fetch logs for this user from last 7 days
+    const logs = await APILog.find({
+      userId: userId,
+      timestamp: { $gte: sevenDaysAgo }
+    });
+
+    if (logs.length === 0) {
+      return res.json({
+        totalCalls: 0,
+        averageCalls: 0,
+        peakDay: 'N/A',
+        peakDayCalls: 0
+      });
+    }
+
+    const totalCalls = logs.length;
+    const dailyCounts = {};
+
+    logs.forEach(log => {
+      const date = new Date(log.timestamp);
+      const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+      dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+    });
+
+    const peakDay = Object.keys(dailyCounts).reduce((a, b) => dailyCounts[a] > dailyCounts[b] ? a : b);
+    const peakDayCalls = dailyCounts[peakDay];
+    const averageCalls = totalCalls / 7;
+
+    res.json({
+      totalCalls,
+      averageCalls: Math.round(averageCalls),
+      peakDay,
+      peakDayCalls
+    });
+
+  } catch (err) {
+    console.error('Error getting user log stats:', err.message);
+    res.status(500).json({ message: 'Error getting log stats', error: err.message });
+  }
+});
+
 router.get('/logs/daily-usage', async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
@@ -94,6 +161,52 @@ router.get('/logs/daily-usage', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch daily usage', error: err.message });
   }
 });
+
+router.post('/logs/daily-usage', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ message: 'userId is required' });
+    }
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Include today
+
+    // Fetch logs only for the given user
+    const logs = await APILog.find({
+      userId: userId,
+      timestamp: { $gte: sevenDaysAgo }
+    });
+
+    const usageMap = {};
+
+    logs.forEach(log => {
+      const date = new Date(log.timestamp);
+      const key = date.toISOString().slice(0, 10); // Format: "YYYY-MM-DD"
+      usageMap[key] = (usageMap[key] || 0) + 1;
+    });
+
+    // Generate last 7 days including today
+    const result = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+
+      result.push({
+        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        calls: usageMap[key] || 0
+      });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error('Error getting daily usage:', err.message);
+    res.status(500).json({ message: 'Failed to fetch daily usage', error: err.message });
+  }
+});
+
 
 router.get('/logs/usage-by-api', async (req, res) => {
   try {
@@ -365,135 +478,14 @@ router.get('/:apiId', async (req, res) => {
   }
 });
 
-//// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> geotab 
-
-router.post('/logs/daily-usage', async (req, res) => {
-  try {
-    const { userId, database } = req.body;
-
-    if (!userId || !database) {
-      return res.status(400).json({ message: 'userId and database are required' });
-    }
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6); // Include today
-
-    // Fetch logs only for this user + database
-    const logs = await APILog.find({
-      userId,
-      database,
-      timestamp: { $gte: sevenDaysAgo }
-    });
-
-    const usageMap = {};
-
-    logs.forEach(log => {
-      const date = new Date(log.timestamp);
-      const key = date.toISOString().slice(0, 10); // Format: "YYYY-MM-DD"
-      usageMap[key] = (usageMap[key] || 0) + 1;
-    });
-
-    // Generate last 7 days including today
-    const result = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const key = d.toISOString().slice(0, 10);
-
-      result.push({
-        date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        calls: usageMap[key] || 0
-      });
-    }
-
-    res.json(result);
-  } catch (err) {
-    console.error('Error getting daily usage:', err.message);
-    res.status(500).json({ message: 'Failed to fetch daily usage', error: err.message });
-  }
-});
-
-router.post('/logs/stats', async (req, res) => {
-  try {
-    const { userId, database } = req.body;
-
-    if (!userId || !database) {
-      return res.status(400).json({ message: 'userId and database are required' });
-    }
-
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    // Fetch logs for this user + database from last 7 days
-    const logs = await APILog.find({
-      userId,
-      database,
-      timestamp: { $gte: sevenDaysAgo }
-    });
-
-    if (logs.length === 0) {
-      return res.json({
-        totalCalls: 0,
-        averageCalls: 0,
-        peakDay: 'N/A',
-        peakDayCalls: 0
-      });
-    }
-
-    const totalCalls = logs.length;
-    const dailyCounts = {};
-
-    logs.forEach(log => {
-      const date = new Date(log.timestamp);
-      const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-      dailyCounts[key] = (dailyCounts[key] || 0) + 1;
-    });
-
-    const peakDay = Object.keys(dailyCounts).reduce((a, b) =>
-      dailyCounts[a] > dailyCounts[b] ? a : b
-    );
-    const peakDayCalls = dailyCounts[peakDay];
-    const averageCalls = totalCalls / 7;
-
-    res.json({
-      totalCalls,
-      averageCalls: Math.round(averageCalls),
-      peakDay,
-      peakDayCalls
-    });
-
-  } catch (err) {
-    console.error('Error getting user log stats:', err.message);
-    res.status(500).json({ message: 'Error getting log stats', error: err.message });
-  }
-});
-
-router.post('/logs', async (req, res) => {
-  try {
-    const { userId, database } = req.body;
-
-    if (!userId || !database) {
-      return res.status(400).json({ message: 'userId and database are required' });
-    }
-
-    const logs = await APILog.find({ userId, database }).sort({ timestamp: -1 });
-
-    res.json(logs);
-  } catch (err) {
-    console.error('Error fetching user logs:', err.message);
-    res.status(500).json({ message: 'Failed to fetch logs', error: err.message });
-  }
-});
-
 router.post('/:apiId', async (req, res) => {
   const start = Date.now();
   const { apiId } = req.params;
-  const { userId, database } = req.body; // ✅ Extract both userId and database
+  const { userId } = req.body; // Extract userId from request body
   let api = null;
 
+  console.log(userId)
   try {
-
-
     // Validate API ID format
     if (!mongoose.Types.ObjectId.isValid(apiId)) {
       const duration = Date.now() - start;
@@ -501,9 +493,8 @@ router.post('/:apiId', async (req, res) => {
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        apiId,
-        userId,
-        database, // ✅ log with database
+        apiId: apiId,
+        userId: userId || null, // Add userId to log
         status: 400,
         responseTime: duration,
         method: req.method,
@@ -521,9 +512,8 @@ router.post('/:apiId', async (req, res) => {
       await APILog.create({
         name: 'Unknown',
         endpoint: 'Unknown',
-        apiId,
-        userId,
-        database, // ✅ log with database
+        apiId: apiId,
+        userId: userId || null, // Add userId to log
         status: 404,
         responseTime: duration,
         method: req.method,
@@ -543,69 +533,92 @@ router.post('/:apiId', async (req, res) => {
 
     // Clone headers and clean them up
     const headers = { ...req.headers };
+
+    // Remove proxy-specific headers that shouldn't be forwarded
     delete headers.host;
     delete headers['if-none-match'];
     delete headers['if-modified-since'];
-    delete headers['content-length'];
+    delete headers['content-length']; // Let axios handle this
     delete headers.connection;
     delete headers['transfer-encoding'];
 
-    // Ensure Content-Type is set for POST/PUT/PATCH
-    if (['post', 'put', 'patch'].includes(api.method.toLowerCase()) && req.body) {
+    // Ensure Content-Type is set for POST requests with body
+    if ((api.method.toLowerCase() === 'post' || api.method.toLowerCase() === 'put' || api.method.toLowerCase() === 'patch') && req.body) {
       if (!headers['content-type']) {
         headers['content-type'] = 'application/json';
       }
     }
 
-    // Prepare request body (don’t forward internal fields)
+    // Prepare request body - exclude userId from being sent to target API
     let requestBody = { ...req.body };
-    delete requestBody.userId;
-    delete requestBody.database; // ✅ don’t leak database to target API
+    delete requestBody.userId; // Remove userId from the body that goes to target API
 
     const axiosConfig = {
-      method: api.method.toLowerCase(),
+      method: api.method.toLowerCase(), // Ensure method is lowercase
       url: api.endpoint,
       headers,
       httpsAgent,
-      timeout: 30000,
-      validateStatus: () => true // accept all statuses
+      timeout: 30000, // 30 second timeout
+      validateStatus: function (status) {
+        // Accept any status code - we'll handle errors manually
+        return true;
+      }
     };
 
-    if (['post', 'put', 'patch'].includes(api.method.toLowerCase()) && Object.keys(requestBody).length > 0) {
-      axiosConfig.data = requestBody;
-    } else if (['get', 'delete'].includes(api.method.toLowerCase()) && Object.keys(req.query).length > 0) {
-      axiosConfig.params = req.query;
+    // Only add data/params based on the method and if there's a body
+    if (['post', 'put', 'patch'].includes(api.method.toLowerCase())) {
+      if (requestBody && Object.keys(requestBody).length > 0) {
+        axiosConfig.data = requestBody;
+      }
+    } else if (['get', 'delete'].includes(api.method.toLowerCase())) {
+      if (req.query && Object.keys(req.query).length > 0) {
+        axiosConfig.params = req.query;
+      }
     }
+
+    console.log('Axios config:', JSON.stringify(axiosConfig, null, 2));
 
     let response;
     try {
       response = await axios(axiosConfig);
+      console.log('Response status:', response.status);
+      console.log('Response data:', response.data);
     } catch (err) {
+      // Handle axios errors
       if (err.response) {
+        // Server responded with error status
         response = err.response;
+        console.log('Error response status:', response.status);
+        console.log('Error response data:', response.data);
       } else if (err.request) {
+        // Request was made but no response received
+        console.error('No response received:', err.message);
         throw new Error('No response from target API');
       } else {
+        // Something else happened
+        console.error('Request setup error:', err.message);
         throw err;
       }
     }
 
     const duration = Date.now() - start;
 
-    // ✅ Log with database included
+    // Log the request with userId
     await APILog.create({
       name: api.name,
       endpoint: api.endpoint,
       apiId: api._id,
-      userId,
-      database,
+      userId: userId || null, // Add userId to log
       status: response.status,
       responseTime: duration,
       method: req.method,
       success: response.status >= 200 && response.status < 400
     });
 
+    // Return the response
     res.status(response.status);
+
+    // Set response headers if needed
     if (response.headers['content-type']) {
       res.set('content-type', response.headers['content-type']);
     }
@@ -615,11 +628,14 @@ router.post('/:apiId', async (req, res) => {
   } catch (err) {
     const duration = Date.now() - start;
 
+    console.error('Proxy error:', err.message);
+    console.error('Error stack:', err.stack);
+
+    // Prepare log data with userId
     const logData = {
       name: api ? api.name : 'Unknown',
       endpoint: api ? api.endpoint : 'Unknown',
-      userId,
-      database, // ✅ include in error logs too
+      userId: userId || null, // Add userId to log
       status: err.response?.status || 500,
       responseTime: duration,
       method: req.method,
