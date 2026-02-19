@@ -23,7 +23,8 @@ app.use(cors({
         "http://localhost:3000",
         "http://localhost:3001",
         "https://api-monitoring-and-purchasing-platform-oe4m.onrender.com",
-        "https://my.geotab.com"
+        "https://my.geotab.com",
+        "https://geotabaddin.c4u-online.co.uk"
     ],
     credentials: true
 }));
